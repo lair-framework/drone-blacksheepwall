@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	VERSION = "2.0.0"
-	TOOL    = "blacksheepwall"
-	USAGE   = `
+	version = "2.0.0"
+	tool    = "blacksheepwall"
+	usage   = `
 Usage:
   drone-blacksheepwall <id> <filename>
   export LAIR_ID=<id>; drone-blacksheepwall <filename>
@@ -35,11 +35,11 @@ func main() {
 	forcePorts := flag.Bool("force-ports", false, "")
 	tags := flag.String("tags", "", "")
 	flag.Usage = func() {
-		fmt.Println(USAGE)
+		fmt.Println(usage)
 	}
 	flag.Parse()
 	if *showVersion {
-		log.Println(VERSION)
+		log.Println(version)
 		os.Exit(0)
 	}
 	lairURL := os.Getenv("LAIR_API_SERVER")
@@ -73,16 +73,16 @@ func main() {
 	exproject := lair.Project{}
 	project := lair.Project{}
 
-	project.Tool = TOOL
+	project.Tool = tool
 	project.Commands = append(project.Commands, lair.Command{
-		Tool: TOOL,
+		Tool: tool,
 	})
 	for _, result := range bResults {
 		found := false
 		for _, h := range exproject.Hosts {
 			if result.IP == h.IPv4 {
 				h.Hostnames = append(h.Hostnames, result.Hostname)
-				h.LastModifiedBy = TOOL
+				h.LastModifiedBy = tool
 				found = true
 				if _, ok := tagSet[h.IPv4]; !ok {
 					tagSet[h.IPv4] = true
