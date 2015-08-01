@@ -25,7 +25,7 @@ Options:
   -h              show usage and exit
   -k              allow insecure SSL connections
   -force-ports    disable data protection in the API server for excessive ports
-	-tags           a comma separated list of tags to add to every host that is imported
+  -tags           a comma separated list of tags to add to every host that is imported
 `
 )
 
