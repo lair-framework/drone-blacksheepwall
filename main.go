@@ -13,8 +13,10 @@ import (
 	"github.com/tomsteele/blacksheepwall/bsw"
 )
 
-var version = "2.0.0"
-var usage = `
+const (
+	VERSION = "2.0.0"
+	TOOL    = "blacksheepwall"
+	USAGE   = `
 Usage:
   drone-blacksheepwall <id> <filename>
   export LAIR_ID=<id>; drone-blacksheepwall <filename>
@@ -25,6 +27,7 @@ Options:
   -force-ports    disable data protection in the API server for excessive ports
 	-tags           a comma separated list of tags to add to every host that is imported
 `
+)
 
 func main() {
 	showVersion := flag.Bool("v", false, "")
@@ -32,11 +35,11 @@ func main() {
 	forcePorts := flag.Bool("force-ports", false, "")
 	tags := flag.String("tags", "", "")
 	flag.Usage = func() {
-		fmt.Println(usage)
+		fmt.Println(USAGE)
 	}
 	flag.Parse()
 	if *showVersion {
-		log.Println(version)
+		log.Println(VERSION)
 		os.Exit(0)
 	}
 	lairURL := os.Getenv("LAIR_API_SERVER")
@@ -70,16 +73,16 @@ func main() {
 	exproject := lair.Project{}
 	project := lair.Project{}
 
-	project.Tool = "blacksheepwall"
+	project.Tool = TOOL
 	project.Commands = append(project.Commands, lair.Command{
-		Tool: "blacksheepwall",
+		Tool: TOOL,
 	})
 	for _, result := range bResults {
 		found := false
 		for _, h := range exproject.Hosts {
 			if result.IP == h.IPv4 {
 				h.Hostnames = append(h.Hostnames, result.Hostname)
-				h.LastModifiedBy = "blacksheepwall"
+				h.LastModifiedBy = TOOL
 				found = true
 				if _, ok := tagSet[h.IPv4]; !ok {
 					tagSet[h.IPv4] = true
