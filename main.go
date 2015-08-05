@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
+	"github.com/lair-framework/api-server/client"
 	"github.com/lair-framework/go-lair"
 	"github.com/tomsteele/blacksheepwall/bsw"
 )
@@ -17,6 +19,8 @@ const (
 	version = "2.0.0"
 	tool    = "blacksheepwall"
 	usage   = `
+Parses a blacksheepwall JSON file into a lair project.
+
 Usage:
   drone-blacksheepwall <id> <filename>
   export LAIR_ID=<id>; drone-blacksheepwall <filename>
@@ -57,12 +61,37 @@ func main() {
 	default:
 		log.Fatal("Fatal: Missing required argument")
 	}
-	log.Println(lairPID, filename, *insecureSSL, *forcePorts, *tags)
+
+	u, err := url.Parse(lairURL)
+	if err != nil {
+		log.Fatalf("Fatal: Error parsing LAIR_API_SERVER URL. Error %s", err.Error())
+	}
+	if u.User == nil {
+		log.Fatal("Fatal: Missing username and/or password")
+	}
+	user := u.User.Username()
+	pass, _ := u.User.Password()
+	if user == "" || pass == "" {
+		log.Fatal("Fatal: Missing username and/or password")
+	}
+	c, err := client.New(&client.COptions{
+		User:               user,
+		Password:           pass,
+		Host:               u.Host,
+		Scheme:             u.Scheme,
+		InsecureSkipVerify: *insecureSSL,
+	})
+	if err != nil {
+		log.Fatalf("Fatal: Error setting up client: Error %s", err.Error())
+	}
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("Fatal: Could not open file. Error %s", err.Error())
 	}
-	hostTags := strings.Split(*tags, ",")
+	hostTags := []string{}
+	if *tags != "" {
+		hostTags = strings.Split(*tags, ",")
+	}
 	tagSet := map[string]bool{}
 	bResults := bsw.Results{}
 	if err := json.Unmarshal(data, bResults); err != nil {
@@ -71,12 +100,14 @@ func main() {
 	bNotFound := map[string]bool{}
 	// Get this from API
 	exproject := lair.Project{}
-	project := lair.Project{}
-
-	project.Tool = tool
-	project.Commands = append(project.Commands, lair.Command{
+	project := &lair.Project{
+		ID:   lairPID,
 		Tool: tool,
-	})
+		Commands: []lair.Command{lair.Command{
+			Tool: tool,
+		}},
+	}
+
 	for _, result := range bResults {
 		found := false
 		for _, h := range exproject.Hosts {
@@ -94,6 +125,7 @@ func main() {
 			}
 		}
 	}
+
 	for _, h := range exproject.Hosts {
 		project.Hosts = append(project.Hosts, lair.Host{
 			IPv4:           h.IPv4,
@@ -104,11 +136,29 @@ func main() {
 			OS:             h.OS,
 			Status:         h.Status,
 			StatusMessage:  h.StatusMessage,
-			Tags:           h.Tags,
+			Tags:           hostTags,
 			Hostnames:      h.Hostnames,
 		})
 	}
-	// upload project to api
+
+	res, err := c.ImportProject(&client.DOptions{ForcePorts: *forcePorts}, project)
+	if err != nil {
+		log.Fatalf("Fatal: Unable to import project. Error %s", err)
+	}
+
+	defer res.Body.Close()
+	droneRes := &client.Response{}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalf("Fatal: Error %s", err.Error())
+	}
+	if err := json.Unmarshal(body, droneRes); err != nil {
+		log.Fatalf("Fatal: Could not unmarshal JSON. Error %s", err.Error())
+	}
+	if droneRes.Status == "Error" {
+		log.Fatalf("Fatal: Import failed. Error %s", droneRes.Message)
+	}
+
 	if len(bNotFound) > 0 {
 		log.Println("Info: The following hosts had hostnames but could not be imported because they do not exist in lair")
 	}
