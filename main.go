@@ -22,8 +22,8 @@ const (
 Parses a blacksheepwall JSON file into a lair project.
 
 Usage:
-  drone-blacksheepwall <id> <filename>
-  export LAIR_ID=<id>; drone-blacksheepwall <filename>
+  drone-blacksheepwall [options] <id> <filename>
+  export LAIR_ID=<id>; drone-blacksheepwall [options] <filename>
 Options:
   -v              show version and exit
   -h              show usage and exit
