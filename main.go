@@ -94,12 +94,16 @@ func main() {
 	}
 	tagSet := map[string]bool{}
 	bResults := bsw.Results{}
-	if err := json.Unmarshal(data, bResults); err != nil {
+	if err := json.Unmarshal(data, &bResults); err != nil {
 		log.Fatalf("Fatal: Could not parse JSON. Error %s", err.Error())
 	}
 	bNotFound := map[string]bool{}
-	// Get this from API
-	exproject := lair.Project{}
+
+	exproject, err := c.ExportProject(lairPID)
+	if err != nil {
+		log.Fatalf("Fatal: Unable to export project. Error %s", err.Error())
+	}
+
 	project := &lair.Project{
 		ID:   lairPID,
 		Tool: tool,
@@ -110,14 +114,15 @@ func main() {
 
 	for _, result := range bResults {
 		found := false
-		for _, h := range exproject.Hosts {
+		for i := range exproject.Hosts {
+			h := exproject.Hosts[i]
 			if result.IP == h.IPv4 {
-				h.Hostnames = append(h.Hostnames, result.Hostname)
-				h.LastModifiedBy = tool
+				exproject.Hosts[i].Hostnames = append(exproject.Hosts[i].Hostnames, result.Hostname)
+				exproject.Hosts[i].LastModifiedBy = tool
 				found = true
 				if _, ok := tagSet[h.IPv4]; !ok {
 					tagSet[h.IPv4] = true
-					h.Tags = append(h.Tags, hostTags...)
+					exproject.Hosts[i].Tags = append(exproject.Hosts[i].Tags, hostTags...)
 				}
 			}
 			if !found {
