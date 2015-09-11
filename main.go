@@ -125,9 +125,9 @@ func main() {
 					exproject.Hosts[i].Tags = append(exproject.Hosts[i].Tags, hostTags...)
 				}
 			}
-			if !found {
-				bNotFound[result.IP] = true
-			}
+		}
+		if !found {
+			bNotFound[result.IP] = true
 		}
 	}
 
