@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	version = "2.0.0"
-	tool    = "blacksheepwall"
+	version = "2.0.1"
+	tool    = "drone-blacksheepwall"
 	usage   = `
 Parses a blacksheepwall JSON file into a lair project.
 
@@ -28,6 +28,8 @@ Options:
   -v              show version and exit
   -h              show usage and exit
   -k              allow insecure SSL connections
+  -force-hosts    import all hosts into Lair, default behaviour is to only import
+                  data for hostnames for hosts that already exist in a project
   -force-ports    disable data protection in the API server for excessive ports
   -tags           a comma separated list of tags to add to every host that is imported
 `
@@ -37,6 +39,7 @@ func main() {
 	showVersion := flag.Bool("v", false, "")
 	insecureSSL := flag.Bool("k", false, "")
 	forcePorts := flag.Bool("force-ports", false, "")
+	forceHosts := flag.Bool("force-hosts", false, "")
 	tags := flag.String("tags", "", "")
 	flag.Usage = func() {
 		fmt.Println(usage)
@@ -97,7 +100,7 @@ func main() {
 	if err := json.Unmarshal(data, &bResults); err != nil {
 		log.Fatalf("Fatal: Could not parse JSON. Error %s", err.Error())
 	}
-	bNotFound := map[string]bool{}
+	bNotFound := map[string]bsw.Results{}
 
 	exproject, err := c.ExportProject(lairPID)
 	if err != nil {
@@ -127,7 +130,7 @@ func main() {
 			}
 		}
 		if !found {
-			bNotFound[result.IP] = true
+			bNotFound[result.IP] = append(bNotFound[result.IP], result)
 		}
 	}
 
@@ -144,6 +147,19 @@ func main() {
 			Tags:           hostTags,
 			Hostnames:      h.Hostnames,
 		})
+	}
+
+	if *forceHosts {
+		for ip, results := range bNotFound {
+			hostnames := []string{}
+			for _, r := range results {
+				hostnames = append(hostnames, r.Hostname)
+			}
+			project.Hosts = append(project.Hosts, lair.Host{
+				IPv4:      ip,
+				Hostnames: hostnames,
+			})
+		}
 	}
 
 	res, err := c.ImportProject(&client.DOptions{ForcePorts: *forcePorts}, project)
