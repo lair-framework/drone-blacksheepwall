@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "2.0.1"
+	version = "2.1.0"
 	tool    = "drone-blacksheepwall"
 	usage   = `
 Parses a blacksheepwall JSON file into a lair project.
@@ -29,7 +29,7 @@ Options:
   -h              show usage and exit
   -k              allow insecure SSL connections
   -force-hosts    import all hosts into Lair, default behaviour is to only import
-                  data for hostnames for hosts that already exist in a project
+                  hostnames for hosts that already exist in a project
   -force-ports    disable data protection in the API server for excessive ports
   -tags           a comma separated list of tags to add to every host that is imported
 `
