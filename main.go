@@ -179,9 +179,12 @@ func main() {
 	if droneRes.Status == "Error" {
 		log.Fatalf("Fatal: Import failed. Error %s", droneRes.Message)
 	}
-
 	if len(bNotFound) > 0 {
-		log.Println("Info: The following hosts had hostnames but could not be imported because they do not exist in lair")
+		if *forceHosts {
+			log.Println("Info: The following hosts had hostnames and were forced to import into lair")
+		} else {
+			log.Println("Info: The following hosts had hostnames but could not be imported because they do not exist in lair")
+		}
 	}
 	for k := range bNotFound {
 		fmt.Println(k)
