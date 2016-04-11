@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "2.1.0"
+	version = "2.1.1"
 	tool    = "drone-blacksheepwall"
 	usage   = `
 Parses a blacksheepwall JSON file into a lair project.
