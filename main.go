@@ -122,7 +122,7 @@ func main() {
 		found := false
 		for i := range exproject.Hosts {
 			h := exproject.Hosts[i]
-			if result.IP == h.IPv4 {
+			if result.IP == h.IPv4 && !strings.Contains(result.Hostname, "*") {
 				exproject.Hosts[i].Hostnames = append(exproject.Hosts[i].Hostnames, result.Hostname)
 				exproject.Hosts[i].LastModifiedBy = tool
 				found = true
