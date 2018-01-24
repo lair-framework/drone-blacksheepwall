@@ -120,20 +120,22 @@ func main() {
 
 	for _, result := range bResults {
 		found := false
-		for i := range exproject.Hosts {
-			h := exproject.Hosts[i]
-			if result.IP == h.IPv4 {
-				exproject.Hosts[i].Hostnames = append(exproject.Hosts[i].Hostnames, result.Hostname)
-				exproject.Hosts[i].LastModifiedBy = tool
-				found = true
-				if _, ok := tagSet[h.IPv4]; !ok {
-					tagSet[h.IPv4] = true
-					exproject.Hosts[i].Tags = append(exproject.Hosts[i].Tags, hostTags...)
+		if !strings.Contains(result.Hostname, "*") {
+			for i := range exproject.Hosts {
+				h := exproject.Hosts[i]
+				if result.IP == h.IPv4 {
+					exproject.Hosts[i].Hostnames = append(exproject.Hosts[i].Hostnames, result.Hostname)
+					exproject.Hosts[i].LastModifiedBy = tool
+					found = true
+					if _, ok := tagSet[h.IPv4]; !ok {
+						tagSet[h.IPv4] = true
+						exproject.Hosts[i].Tags = append(exproject.Hosts[i].Tags, hostTags...)
+					}
 				}
 			}
-		}
-		if !found {
-			bNotFound[result.IP] = append(bNotFound[result.IP], result)
+			if !found {
+				bNotFound[result.IP] = append(bNotFound[result.IP], result)
+			}
 		}
 	}
 
@@ -186,7 +188,7 @@ func main() {
 		if *forceHosts {
 			log.Println("Info: The following hosts had hostnames and were forced to import into lair")
 		} else {
-			log.Println("Info: The following hosts had hostnames but could not be imported because they do not exist in lair")
+			log.Println("Info: The following hosts had hostnames but could not be imported because they either had wildcard hostnames or do not exist in lair")
 		}
 	}
 	for k := range bNotFound {
